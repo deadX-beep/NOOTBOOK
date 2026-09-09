@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notebook</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #EEE9DD;
+    --surface: #FAF7F0;
+    --surface-raised: #FFFFFF;
+    --ink: #2B2620;
+    --ink-soft: #6E6659;
+    --line: #DAD2C0;
+    --line-strong: #C6BCA5;
+    --accent: #47614B;
+    --accent-soft: #E1E9DE;
+    --brick: #9C4B37;
+    --brick-soft: #F3E1DA;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    height:100vh;
+    overflow:hidden;
+  }
+  .app{
+    display:flex;
+    height:100vh;
+  }
+
+  /* Sidebar */
+  .sidebar{
+    width:300px;
+    min-width:300px;
+    background:var(--surface);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+  }
+  .sidebar-head{
+    padding:22px 20px 14px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    font-family:'Source Serif 4', serif;
+    font-size:21px;
+    font-weight:600;
+    margin:0 0 14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .brand-mark{
+    width:9px;height:9px;border-radius:2px;background:var(--accent);
+    display:inline-block;
+  }
+  .search-row{
+    display:flex;
+    gap:8px;
+  }
+  input[type=text].search{
+    flex:1;
+    border:1px solid var(--line-strong);
+    background:var(--surface-raised);
+    border-radius:7px;
+    padding:8px 10px;
+    font-size:13.5px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+  }
+  input[type=text].search:focus{outline:none;border-color:var(--accent);}
+  .new-btn{
+    border:none;
+    background:var(--accent);
+    color:#F3F1E9;
+    border-radius:7px;
+    width:34px;height:34px;
+    font-size:19px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    line-height:0;
+    flex-shrink:0;
+  }
+  .new-btn:hover{background:#3B5140;}
+
+  .note-list{
+    flex:1;
+    overflow-y:auto;
+    padding:8px 10px 20px;
+  }
+  .note-item{
+    padding:11px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-bottom:3px;
+    border-left:3px solid transparent;
+    position:relative;
+  }
+  .note-item:hover{background:var(--accent-soft);}
+  .note-item.active{background:var(--accent-soft); border-left-color:var(--accent);}
+  .note-title{
+    font-size:14px;
+    font-weight:500;
+    margin:0 0 3px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .note-preview{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .note-meta{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:5px;
+  }
+  .note-date{font-size:11px;color:var(--ink-soft);}
+  .swatch{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .pin-badge{font-size:10px;color:var(--brick);margin-left:auto;}
+  .reminder-chip{
+    font-size:10.5px;
+    color:var(--accent);
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:3px;
+  }
+  .reminder-chip.overdue{color:var(--brick);}
+  .reminder-chip .dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+  .reminders-panel{
+    border-bottom:1px solid var(--line);
+    padding:12px 20px 14px;
+  }
+  .reminders-panel h3{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--ink-soft);
+    margin:0 0 8px;
+    font-weight:500;
+  }
+  .reminder-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:5px 0;
+    cursor:pointer;
+    font-size:12.5px;
+  }
+  .reminder-row:hover .reminder-row-title{text-decoration:underline;}
+  .reminder-row .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+  .reminder-row.overdue .dot{background:var(--brick);}
+  .reminder-row-title{
+    flex:1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    color:var(--ink);
+  }
+  .reminder-row-time{
+    font-size:11px;
+    color:var(--ink-soft);
+    flex-shrink:0;
+  }
+  .reminder-row.overdue .reminder-row-time{color:var(--brick);}
+
+  .empty-list{
+    padding:30px 16px;
+    color:var(--ink-soft);
+    font-size:13px;
+    text-align:center;
+    line-height:1.6;
+  }
+
+  /* Main pane */
+  .main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    background:
+      linear-gradient(var(--line) 1px, transparent 1px);
+    background-size: 100% 34px;
+    background-position: 0 92px;
+  }
+  .main-top{
+    background:var(--bg);
+    padding:16px 40px 0;
+  }
+  .toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--line-strong);
+  }
+  .swatch-btn{
+    width:16px;height:16px;border-radius:50%;
+    border:2px solid transparent;
+    cursor:pointer;
+  }
+  .swatch-btn.selected{border-color:var(--ink);}
+  .tool-sep{width:1px;height:18px;background:var(--line-strong);}
+  .tool-btn{
+    border:none;background:none;
+    font-size:13px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    padding:5px 9px;
+    border-radius:6px;
+    font-family:'Inter',sans-serif;
+  }
+  .tool-btn:hover{background:rgba(0,0,0,0.05); color:var(--ink);}
+  .tool-btn.danger:hover{background:var(--brick-soft); color:var(--brick);}
+  .save-state{
+    margin-left:auto;
+    font-size:11.5px;
+    color:var(--ink-soft);
+  }
+  .tool-btn.reminder-set{
+    background:var(--accent-soft);
+    color:var(--accent);
+  }
+  .reminder-editor{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:12px 0 2px;
+  }
+  .reminder-editor input[type=datetime-local]{
+    border:1px solid var(--line-strong);
+    background:var(--surface-raised);
+    border-radius:6px;
+    padding:6px 8px;
+    font-size:12.5px;
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+  }
+  .reminder-editor input[type=datetime-local]:focus{outline:none;border-color:var(--accent);}
+  .reminder-editor button{
+    border:1px solid var(--line-strong);
+    background:var(--surface-raised);
+    border-radius:6px;
+    padding:6px 11px;
+    font-size:12.5px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .reminder-editor button.primary{
+    background:var(--accent); color:#F3F1E9; border-color:var(--accent);
+  }
+
+  .editor-wrap{
+    flex:1;
+    overflow-y:auto;
+    padding:0 40px 40px;
+  }
+  .title-input{
+    width:100%;
+    border:none;
+    background:transparent;
+    font-family:'Source Serif 4', serif;
+    font-size:27px;
+    font-weight:600;
+    color:var(--ink);
+    padding:20px 0 6px;
+    line-height:34px;
+  }
+  .title-input:focus{outline:none;}
+  .title-input::placeholder{color:#A79E8C;}
+  .body-input{
+    width:100%;
+    border:none;
+    background:transparent;
+    resize:none;
+    font-family:'Source Serif 4', serif;
+    font-size:16px;
+    color:var(--ink);
+    line-height:34px;
+    min-height:400px;
+  }
+  .body-input:focus{outline:none;}
+  .body-input::placeholder{color:#A79E8C; font-style:italic;}
+
+  .empty-state{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:var(--ink-soft);
+    gap:14px;
+    text-align:center;
+    padding:40px;
+  }
+  .empty-state h2{
+    font-family:'Source Serif 4', serif;
+    font-weight:600;
+    color:var(--ink);
+    font-size:20px;
+    margin:0;
+  }
+  .empty-state p{font-size:13.5px; margin:0; max-width:280px; line-height:1.6;}
+  .empty-state button{
+    border:none;
+    background:var(--accent);
+    color:#F3F1E9;
+    border-radius:7px;
+    padding:9px 18px;
+    font-size:13.5px;
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  .empty-state button:hover{background:#3B5140;}
+
+  ::-webkit-scrollbar{width:9px;}
+  ::-webkit-scrollbar-thumb{background:var(--line-strong); border-radius:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  .confirm-overlay{
+    position:absolute; inset:0;
+    background:rgba(43,38,32,0.35);
+    display:flex; align-items:center; justify-content:center;
+    z-index:10;
+  }
+  .confirm-box{
+    background:var(--surface-raised);
+    border-radius:10px;
+    padding:20px 22px;
+    width:280px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.18);
+  }
+  .confirm-box p{font-size:13.5px; margin:0 0 16px; line-height:1.5;}
+  .confirm-actions{display:flex; gap:8px; justify-content:flex-end;}
+  .confirm-actions button{
+    border:1px solid var(--line-strong);
+    background:var(--surface-raised);
+    border-radius:6px;
+    padding:7px 13px;
+    font-size:13px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .confirm-actions button.danger{
+    background:var(--brick); color:#fff; border-color:var(--brick);
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="sidebar">
+    <div class="sidebar-head">
+      <p class="brand"><span class="brand-mark"></span>Notebook</p>
+      <div class="search-row">
+        <input type="text" class="search" id="searchInput" placeholder="Search your notes">
+        <button class="new-btn" id="newNoteBtn" title="New note">+</button>
+      </div>
+    </div>
+    <div id="remindersPanel"></div>
+    <div class="note-list" id="noteList"></div>
+  </div>
+
+  <div class="main" id="mainPane" style="position:relative;"></div>
+</div>
+
+<script>
+const COLORS = [
+  {id:'green', hex:'#47614B'},
+  {id:'brick', hex:'#9C4B37'},
+  {id:'slate', hex:'#4C5F73'},
+  {id:'mustard', hex:'#B5892E'},
+  {id:'plum', hex:'#7A4C6E'},
+];
+
+let state = { notes: [], selectedId: null };
+let searchTerm = '';
+let saveTimer = null;
+let storageReady = false;
+
+function uid(){ return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function formatDate(ts){
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if(sameDay) return d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  return d.toLocaleDateString([], {month:'short', day:'numeric'});
+}
+
+function colorHex(id){
+  const c = COLORS.find(c=>c.id===id);
+  return c ? c.hex : COLORS[0].hex;
+}
+
+function formatReminder(ts){
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const timePart = d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  if(sameDay) return timePart;
+  return d.toLocaleDateString([], {month:'short', day:'numeric'}) + ', ' + timePart;
+}
+
+function toLocalInputValue(ts){
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function upcomingReminders(){
+  return state.notes
+    .filter(n => n.reminder)
+    .sort((a,b) => a.reminder - b.reminder);
+}
+
+async function loadData(){
+  try{
+    const result = await window.storage.get('notebook-data', false);
+    if(result && result.value){
+      const parsed = JSON.parse(result.value);
+      state.notes = parsed.notes || [];
+    }
+  }catch(e){
+    state.notes = [];
+  }
+  storageReady = true;
+  if(state.notes.length && !state.selectedId){
+    state.selectedId = sortedNotes()[0].id;
+  }
+  render();
+}
+
+async function persist(){
+  try{
+    await window.storage.set('notebook-data', JSON.stringify({notes: state.notes}), false);
+    setSaveState('Saved');
+  }catch(e){
+    setSaveState('Could not save — try again');
+  }
+}
+
+function scheduleSave(){
+  setSaveState('Saving…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persist, 500);
+}
+
+function setSaveState(text){
+  const el = document.getElementById('saveState');
+  if(el) el.textContent = text;
+}
+
+function sortedNotes(){
+  let list = state.notes.slice();
+  if(searchTerm.trim()){
+    const q = searchTerm.toLowerCase();
+    list = list.filter(n => (n.title||'').toLowerCase().includes(q) || (n.body||'').toLowerCase().includes(q));
+  }
+  list.sort((a,b)=>{
+    if(!!b.pinned !== !!a.pinned) return b.pinned ? 1 : -1;
+    return b.updatedAt - a.updatedAt;
+  });
+  return list;
+}
+
+function createNote(){
+  const note = { id: uid(), title:'', body:'', color:'green', pinned:false, reminder:null, updatedAt: Date.now() };
+  state.notes.unshift(note);
+  state.selectedId = note.id;
+  scheduleSave();
+  render();
+  setTimeout(()=>{ const t = document.getElementById('titleInput'); if(t) t.focus(); }, 0);
+}
+
+function deleteNote(id){
+  state.notes = state.notes.filter(n=>n.id!==id);
+  if(state.selectedId === id){
+    const remaining = sortedNotes();
+    state.selectedId = remaining.length ? remaining[0].id : null;
+  }
+  scheduleSave();
+  render();
+}
+
+function updateNote(id, fields){
+  const note = state.notes.find(n=>n.id===id);
+  if(!note) return;
+  Object.assign(note, fields, {updatedAt: Date.now()});
+  scheduleSave();
+}
+
+function renderNoteList(){
+  const container = document.getElementById('noteList');
+  const list = sortedNotes();
+  if(!list.length){
+    container.innerHTML = `<div class="empty-list">${searchTerm.trim() ? 'No notes match your search.' : 'No notes yet. Tap + to start writing.'}</div>`;
+    return;
+  }
+  container.innerHTML = list.map(n => {
+    const preview = (n.body || '').replace(/\s+/g,' ').trim();
+    return `
+    <div class="note-item ${n.id===state.selectedId?'active':''}" data-id="${n.id}">
+      <p class="note-title">${escapeHtml(n.title) || 'Untitled'}</p>
+      <p class="note-preview">${escapeHtml(preview) || 'Empty note'}</p>
+      <div class="note-meta">
+        <span class="swatch" style="background:${colorHex(n.color)}"></span>
+        <span class="note-date">${formatDate(n.updatedAt)}</span>
+        ${n.reminder ? `<span class="reminder-chip ${n.reminder < Date.now() ? 'overdue':''}"><span class="dot"></span>${formatReminder(n.reminder)}</span>` : (n.pinned ? '<span class="pin-badge">Pinned</span>' : '')}
+      </div>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('.note-item').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      state.selectedId = el.getAttribute('data-id');
+      render();
+    });
+  });
+}
+
+function renderRemindersPanel(){
+  const container = document.getElementById('remindersPanel');
+  const list = upcomingReminders();
+  if(!list.length){
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = `
+    <div class="reminders-panel">
+      <h3>Reminders</h3>
+      ${list.slice(0,4).map(n => `
+        <div class="reminder-row ${n.reminder < Date.now() ? 'overdue' : ''}" data-id="${n.id}">
+          <span class="dot"></span>
+          <span class="reminder-row-title">${escapeHtml(n.title) || 'Untitled'}</span>
+          <span class="reminder-row-time">${formatReminder(n.reminder)}</span>
+        </div>
+      `).join('')}
+    </div>`;
+  container.querySelectorAll('.reminder-row').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      state.selectedId = el.getAttribute('data-id');
+      render();
+    });
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+function renderMain(){
+  const pane = document.getElementById('mainPane');
+  const note = state.notes.find(n=>n.id===state.selectedId);
+
+  if(!note){
+    pane.style.background = 'var(--bg)';
+    pane.innerHTML = `
+      <div class="empty-state">
+        <h2>Your page is blank</h2>
+        <p>Pick a note from the list, or start a fresh one whenever a thought needs somewhere to live.</p>
+        <button id="emptyNewBtn">New note</button>
+      </div>`;
+    document.getElementById('emptyNewBtn').addEventListener('click', createNote);
+    return;
+  }
+
+  pane.style.background = `linear-gradient(var(--line) 1px, transparent 1px)`;
+  pane.style.backgroundSize = '100% 34px';
+  pane.style.backgroundPosition = '0 92px';
+
+  pane.innerHTML = `
+    <div class="main-top">
+      <div class="toolbar">
+        ${COLORS.map(c=>`<button class="swatch-btn ${note.color===c.id?'selected':''}" style="background:${c.hex}" data-color="${c.id}" title="${c.id}"></button>`).join('')}
+        <div class="tool-sep"></div>
+        <button class="tool-btn" id="pinBtn">${note.pinned ? 'Unpin' : 'Pin'}</button>
+        <button class="tool-btn ${note.reminder ? 'reminder-set' : ''}" id="reminderBtn">${note.reminder ? formatReminder(note.reminder) : 'Remind me'}</button>
+        <button class="tool-btn danger" id="deleteBtn">Delete</button>
+        <span class="save-state" id="saveState">Saved</span>
+      </div>
+      <div class="reminder-editor" id="reminderEditor" style="display:none;">
+        <input type="datetime-local" id="reminderInput" value="${note.reminder ? toLocalInputValue(note.reminder) : ''}">
+        <button class="primary" id="setReminderBtn">Set</button>
+        ${note.reminder ? '<button id="clearReminderBtn">Clear</button>' : ''}
+      </div>
+    </div>
+    <div class="editor-wrap">
+      <input type="text" class="title-input" id="titleInput" placeholder="Untitled" value="${escapeHtml(note.title)}">
+      <textarea class="body-input" id="bodyInput" placeholder="Start writing…">${escapeHtml(note.body)}</textarea>
+    </div>
+  `;
+
+  document.getElementById('titleInput').addEventListener('input', (e)=>{
+    updateNote(note.id, {title: e.target.value});
+    const item = document.querySelector(`.note-item[data-id="${note.id}"] .note-title`);
+    if(item) item.textContent = e.target.value || 'Untitled';
+  });
+  document.getElementById('bodyInput').addEventListener('input', (e)=>{
+    updateNote(note.id, {body: e.target.value});
+    autoGrow(e.target);
+    const item = document.querySelector(`.note-item[data-id="${note.id}"] .note-preview`);
+    if(item) item.textContent = e.target.value.replace(/\s+/g,' ').trim() || 'Empty note';
+  });
+  document.getElementById('pinBtn').addEventListener('click', ()=>{
+    updateNote(note.id, {pinned: !note.pinned});
+    render();
+  });
+  document.getElementById('deleteBtn').addEventListener('click', ()=>{
+    showConfirm(note.id);
+  });
+  document.getElementById('reminderBtn').addEventListener('click', ()=>{
+    const ed = document.getElementById('reminderEditor');
+    ed.style.display = ed.style.display === 'none' ? 'flex' : 'none';
+    if(ed.style.display === 'flex') document.getElementById('reminderInput').focus();
+  });
+  document.getElementById('setReminderBtn').addEventListener('click', ()=>{
+    const val = document.getElementById('reminderInput').value;
+    if(!val) return;
+    updateNote(note.id, {reminder: new Date(val).getTime()});
+    render();
+  });
+  const clearBtn = document.getElementById('clearReminderBtn');
+  if(clearBtn){
+    clearBtn.addEventListener('click', ()=>{
+      updateNote(note.id, {reminder: null});
+      render();
+    });
+  }
+  pane.querySelectorAll('.swatch-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      updateNote(note.id, {color: btn.getAttribute('data-color')});
+      render();
+    });
+  });
+
+  const bodyEl = document.getElementById('bodyInput');
+  autoGrow(bodyEl);
+}
+
+function autoGrow(el){
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight + 10) + 'px';
+}
+
+function showConfirm(id){
+  const pane = document.getElementById('mainPane');
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-box">
+      <p>Delete this note? This can't be undone.</p>
+      <div class="confirm-actions">
+        <button id="cancelDel">Cancel</button>
+        <button class="danger" id="confirmDel">Delete</button>
+      </div>
+    </div>`;
+  pane.appendChild(overlay);
+  document.getElementById('cancelDel').addEventListener('click', ()=> overlay.remove());
+  document.getElementById('confirmDel').addEventListener('click', ()=>{
+    overlay.remove();
+    deleteNote(id);
+  });
+}
+
+function render(){
+  renderRemindersPanel();
+  renderNoteList();
+  renderMain();
+}
+
+document.getElementById('newNoteBtn').addEventListener('click', createNote);
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchTerm = e.target.value;
+  renderNoteList();
+});
+
+loadData();
+</script>
+</body>
+</html>
