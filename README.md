@@ -16,6 +16,6 @@ A simple personal notebook app with reminders, built as a single HTML file. No i
 
 ## Download
 
-[Download notebook.html](https://github.com/deadX-beep/NOOTBOOK/raw/main/notebook%20.html)
+[Download notebook.html](https://github.com/deadX-beep/NOOTBOOK/raw/main/notebook%20(1).html)
 
 Save the file anywhere on your computer and double-click it to open the notebook in your browser.
